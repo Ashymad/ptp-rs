@@ -9,3 +9,8 @@ edition = "2018"
 [dependencies]
     mio = {version = "0.7", features = ["udp", "os-poll"]}
     signal-hook = "0.1"
+    nom = "5.0"
+    num = "0.2"
+    num-derive = "0.3"
+    num-traits = "0.2"
+    enum-repr = "0.2"

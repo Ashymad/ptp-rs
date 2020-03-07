@@ -1,8 +1,16 @@
+#[macro_use]
+extern crate nom;
+#[macro_use]
+extern crate num_derive;
+
 use mio::{Events, Poll, Interest, Token};
 use mio::net::UdpSocket;
 
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+
+mod parser;
+use parser::parse_ptp_header;
 
 fn main() {
     let sigint = Arc::new(AtomicBool::new(false));
@@ -34,19 +42,16 @@ fn main() {
 
         for event in &events {
             if event.is_readable() {
-            let mut buf = [0u8; 34];
-            let (number_of_bytes, src_addr) = if event.token() == Token(0) {
-                socket_event.recv_from(&mut buf).expect("Didn't receive data")
-            } else if event.token() == Token(1) {
-                socket_general.recv_from(&mut buf).expect("Didn't receive data")
-            } else {
-                panic!("Unknown token: {:?}", event.token())
-            };
-            println!("Received ptp message from: {}, of type: {}, length {} bytes", src_addr, buf[0] & 0x0F, number_of_bytes);
+                let mut buf = [0u8; 34];
+                let (number_of_bytes, src_addr) = if event.token() == Token(0) {
+                    socket_event.recv_from(&mut buf).expect("Didn't receive data")
+                } else if event.token() == Token(1) {
+                    socket_general.recv_from(&mut buf).expect("Didn't receive data")
+                } else {
+                    panic!("Unknown token: {:?}", event.token())
+                };
+                println!("Received ptp message from: {}\n{:?} ", src_addr, parse_ptp_header(&buf).unwrap());
             }
         }
     }
-
-    socket_general.leave_multicast_v4(&multicast_addr, &iface_addr).unwrap();
-    socket_event.leave_multicast_v4(&multicast_addr, &iface_addr).unwrap();
 }
