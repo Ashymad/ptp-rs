@@ -1,20 +1,55 @@
 #[macro_use]
 extern crate nom;
+#[macro_use]
+extern crate serde_derive;
 
 use mio::{Events, Poll, Interest, Token};
 use mio::net::UdpSocket;
 
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use ifaces::interface::{Interface, Kind};
 
 mod parser;
 use parser::parse_ptp_header;
 
+use docopt::Docopt;
+
+const USAGE: &'static str = "
+Rust PTP stack
+
+Usage:
+  ptp --interface=<iface>
+  ptp (-h | --help)
+
+Options:
+  -h --help            Show this screen.
+  --interface=<iface>  Choose network interface
+";
+
+#[derive(Debug, Deserialize)]
+pub struct Args {
+    flag_interface: String,
+}
+
 fn main() {
+    let args: Args = Docopt::new(USAGE)
+        .and_then(|d| d.deserialize())
+        .unwrap_or_else(|e| e.exit());
+
+    let iface_addr = if let std::net::IpAddr::V4(iface_addr) = Interface::get_all()
+        .expect("Couldn't get interfaces").iter()
+        .filter(|iface| iface.name == args.flag_interface && iface.kind == Kind::Ipv4)
+        .next().expect(&format!("Couldn't find iface: {}", args.flag_interface))
+        .addr.expect(&format!("Could not get address of iface: {}", args.flag_interface)).ip(){
+            iface_addr
+        } else {
+            panic!("Address invalid!")
+        };
+
     let sigint = Arc::new(AtomicBool::new(false));
     signal_hook::flag::register(signal_hook::SIGINT, Arc::clone(&sigint)).unwrap();
 
-    let iface_addr = "192.168.0.10".parse().unwrap();
     let multicast_addr = "224.0.1.129".parse().unwrap();
     let bind_addr_event = "0.0.0.0:319".parse().unwrap();
     let bind_addr_general = "0.0.0.0:320".parse().unwrap();

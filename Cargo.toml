@@ -1,5 +1,5 @@
 [package]
-name = "ptp-rs"
+name = "ptp"
 version = "0.1.0"
 authors = ["Szymon Mikulicz <szymon.mikulicz@posteo.net>"]
 edition = "2018"
@@ -10,3 +10,7 @@ edition = "2018"
     mio = {version = "0.7", features = ["udp", "os-poll"]}
     signal-hook = "0.1"
     nom = "5.0"
+    docopt = "1"
+    serde = "1.0"
+    serde_derive = "1.0"
+    ifaces = "0.1"
