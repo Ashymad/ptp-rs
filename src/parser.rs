@@ -22,22 +22,22 @@ pub mod types {
     }
     pub mod enums {
         use super::primitive::Enumeration4;
-        use enum_repr::EnumRepr;
 
-        #[EnumRepr(type = "Enumeration4")]
-        #[allow(non_camel_case_types)]
-        #[derive(FromPrimitive, Clone, Copy, Debug, Eq, PartialEq)]
-        pub enum MessageType {
-            Sync                  = 0x0,
-            Delay_Req             = 0x1,
-            Pdelay_Req            = 0x2,
-            Pdelay_Resp           = 0x3,
-            Follow_Up             = 0x8,
-            Delay_Resp            = 0x9,
-            Pdelay_Resp_Follow_Up = 0xA,
-            Announce              = 0xB,
-            Signaling             = 0xC,
-            Management            = 0xD,
+        #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+        pub struct MessageType(pub Enumeration4);
+
+        #[allow(non_upper_case_globals)]
+        impl MessageType {
+            pub const Sync                  : MessageType = MessageType(0x0);
+            pub const Delay_Req             : MessageType = MessageType(0x1);
+            pub const Pdelay_Req            : MessageType = MessageType(0x2);
+            pub const Pdelay_Resp           : MessageType = MessageType(0x3);
+            pub const Follow_Up             : MessageType = MessageType(0x8);
+            pub const Delay_Resp            : MessageType = MessageType(0x9);
+            pub const Pdelay_Resp_Follow_Up : MessageType = MessageType(0xA);
+            pub const Announce              : MessageType = MessageType(0xB);
+            pub const Signaling             : MessageType = MessageType(0xC);
+            pub const Management            : MessageType = MessageType(0xD);
         }
     }
     #[allow(non_snake_case)]
@@ -110,7 +110,7 @@ named!(#[allow(non_snake_case)], pub parse_ptp_header<PtpHeader>,
         (
             PtpHeader {
                 transportSpecific: b0.0,
-                messageType: num::FromPrimitive::from_u8(b0.1).unwrap(),
+                messageType: MessageType(b0.1),
                 _reserved1: b0.2,
                 versionPTP: b0.3,
                 messageLength ,

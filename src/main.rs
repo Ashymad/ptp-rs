@@ -1,7 +1,5 @@
 #[macro_use]
 extern crate nom;
-#[macro_use]
-extern crate num_derive;
 
 use mio::{Events, Poll, Interest, Token};
 use mio::net::UdpSocket;
