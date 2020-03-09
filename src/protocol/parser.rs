@@ -1,27 +1,26 @@
+use crate::protocol::types::derived::*;
+use crate::protocol::types::enums::*;
+use crate::protocol::types::message::{body, Body, Header, Message};
+
 use std::convert::TryInto;
 
-use super::types::derived::*;
-use super::types::enums::*;
-use super::types::{Header, Message, Body};
-use super::types::body;
-
-use nom::{IResult, Err, Needed};
-use nom::error::{ParseError};
-use nom::number::streaming::{be_i8, be_u8, be_u16, be_u32, be_i64, be_i16};
+use nom::error::ParseError;
+use nom::number::streaming::{be_i16, be_i64, be_i8, be_u16, be_u32, be_u8};
+use nom::{Err, IResult, Needed};
 
 #[inline]
-pub fn be_u48<'a, E: ParseError<&'a[u8]>>(i: &'a[u8]) -> IResult<&'a[u8], u64, E> {
-  if i.len() < 6 {
-    Err(Err::Incomplete(Needed::Size(6)))
-  } else {
-    let res = ((i[0] as u64) << 40)
-        + ((i[1] as u64) << 32)
-        + ((i[2] as u64) << 24)
-        + ((i[3] as u64) << 16)
-        + ((i[4] as u64) << 8)
-        + i[5] as u64;
-    Ok((&i[6..], res))
-  }
+pub fn be_u48<'a, E: ParseError<&'a [u8]>>(i: &'a [u8]) -> IResult<&'a [u8], u64, E> {
+    if i.len() < 6 {
+        Err(Err::Incomplete(Needed::Size(6)))
+    } else {
+        let res = ((i[0] as u64) << 40)
+            + ((i[1] as u64) << 32)
+            + ((i[2] as u64) << 24)
+            + ((i[3] as u64) << 16)
+            + ((i[4] as u64) << 8)
+            + i[5] as u64;
+        Ok((&i[6..], res))
+    }
 }
 
 named!(#[allow(non_snake_case)], pub parse_timestamp<Timestamp>,
@@ -58,36 +57,37 @@ named!(#[allow(non_snake_case)], pub parse_clock_quality<ClockQuality>,
         (
             ClockQuality {
                 clockClass,
-                clockAccuracy: ClockAcurracy(clockAccuracy),
+                clockAccuracy: clockAccuracy.into(),
                 offsetScaledLogVariance
             }
         )
     )
 );
 #[allow(non_snake_case)]
-pub fn parse_ptp_header<'a>(i: &'a[u8]) -> IResult<&'a[u8], Header> {
+pub fn parse_ptp_header<'a>(i: &'a [u8]) -> IResult<&'a [u8], Header> {
     do_parse!(
         i,
-        b0: bits!(
-            tuple!(take_bits!(4u8), take_bits!(4u8), take_bits!(4u8), take_bits!(4u8))
-        ) >>
-        messageLength: be_u16 >>
-        domainNumber: be_u8 >>
-        _reserved2: take!(1) >>
-        flagField: take!(2) >>
-        correctionField: be_i64 >>
-        _reserved3: take!(4) >>
-        sourcePortIdentity: parse_port_identity >>
-        sequenceId: be_u16 >>
-        controlField: be_u8 >>
-        logMessageInterval: be_i8 >>
-        (
-            Header {
+        b0: bits!(tuple!(
+            take_bits!(4u8),
+            take_bits!(4u8),
+            take_bits!(4u8),
+            take_bits!(4u8)
+        )) >> messageLength: be_u16
+            >> domainNumber: be_u8
+            >> _reserved2: take!(1)
+            >> flagField: take!(2)
+            >> correctionField: be_i64
+            >> _reserved3: take!(4)
+            >> sourcePortIdentity: parse_port_identity
+            >> sequenceId: be_u16
+            >> controlField: be_u8
+            >> logMessageInterval: be_i8
+            >> (Header {
                 transportSpecific: b0.0,
                 messageType: b0.1,
                 _reserved1: b0.2,
                 versionPTP: b0.3,
-                messageLength ,
+                messageLength,
                 domainNumber,
                 _reserved2: _reserved2[0],
                 flagField: flagField.try_into().expect("Wrong size flagField array!"),
@@ -97,8 +97,7 @@ pub fn parse_ptp_header<'a>(i: &'a[u8]) -> IResult<&'a[u8], Header> {
                 sequenceId,
                 controlField,
                 logMessageInterval,
-            }
-        )
+            })
     )
 }
 
@@ -170,14 +169,14 @@ macro_rules! parse_ptp_body (
                                 grandmasterPriority2,
                                 grandmasterIdentity: grandmasterIdentity.try_into().expect("Wrong size grandmasterIdentity array!"),
                                 stepsRemoved,
-                                timeSource: TimeSource(timeSource)
+                                timeSource: timeSource.into()
                             })
                         )
                     )
                 },
                 _ => {
                     eprintln!("Unknown message type: {:?}, couldn't parse!", $message_type);
-                    Ok(($i, Body::Empty)) 
+                    Ok(($i, Body::Empty))
                 }
             }
         }

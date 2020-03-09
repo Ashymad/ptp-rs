@@ -3,12 +3,12 @@ extern crate nom;
 #[macro_use]
 extern crate serde_derive;
 
-use mio::{Events, Poll, Interest, Token};
 use mio::net::UdpSocket;
+use mio::{Events, Interest, Poll, Token};
 
-use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
 use ifaces::interface::{Interface, Kind};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 
 mod protocol;
 use protocol::parser::parse_ptp_message;
@@ -38,14 +38,22 @@ fn main() {
         .unwrap_or_else(|e| e.exit());
 
     let iface_addr = if let std::net::IpAddr::V4(iface_addr) = Interface::get_all()
-        .expect("Couldn't get interfaces").iter()
+        .expect("Couldn't get interfaces")
+        .iter()
         .filter(|iface| iface.name == args.flag_interface && iface.kind == Kind::Ipv4)
-        .next().expect(&format!("Couldn't find iface: {}", args.flag_interface))
-        .addr.expect(&format!("Could not get address of iface: {}", args.flag_interface)).ip(){
-            iface_addr
-        } else {
-            panic!("Address invalid!")
-        };
+        .next()
+        .expect(&format!("Couldn't find iface: {}", args.flag_interface))
+        .addr
+        .expect(&format!(
+            "Could not get address of iface: {}",
+            args.flag_interface
+        ))
+        .ip()
+    {
+        iface_addr
+    } else {
+        panic!("Address invalid!")
+    };
 
     let sigint = Arc::new(AtomicBool::new(false));
     signal_hook::flag::register(signal_hook::SIGINT, Arc::clone(&sigint)).unwrap();
@@ -55,15 +63,26 @@ fn main() {
     let bind_addr_general = "0.0.0.0:320".parse().unwrap();
     let mut socket_general = UdpSocket::bind(bind_addr_general).unwrap();
     let mut socket_event = UdpSocket::bind(bind_addr_event).unwrap();
-    socket_general.join_multicast_v4(&multicast_addr, &iface_addr).unwrap();
-    socket_event.join_multicast_v4(&multicast_addr, &iface_addr).unwrap();
+    socket_general
+        .join_multicast_v4(&multicast_addr, &iface_addr)
+        .unwrap();
+    socket_event
+        .join_multicast_v4(&multicast_addr, &iface_addr)
+        .unwrap();
     let mut poll = Poll::new().unwrap();
     let mut events = Events::with_capacity(128);
 
-    poll.registry().register(&mut socket_event, Token(0), Interest::READABLE).unwrap();
-    poll.registry().register(&mut socket_general, Token(1), Interest::READABLE).unwrap();
+    poll.registry()
+        .register(&mut socket_event, Token(0), Interest::READABLE)
+        .unwrap();
+    poll.registry()
+        .register(&mut socket_general, Token(1), Interest::READABLE)
+        .unwrap();
 
-    println!("Listening on: General: {}, Event: {}, Multicast: {}", bind_addr_general, bind_addr_event, multicast_addr);
+    println!(
+        "Listening on: General: {}, Event: {}, Multicast: {}",
+        bind_addr_general, bind_addr_event, multicast_addr
+    );
     while !sigint.load(Ordering::Relaxed) {
         if let Err(err) = poll.poll(&mut events, None) {
             if err.kind() == std::io::ErrorKind::Interrupted {
@@ -77,13 +96,21 @@ fn main() {
             if event.is_readable() {
                 let mut buf = [0u8; 64];
                 let (number_of_bytes, src_addr) = if event.token() == Token(0) {
-                    socket_event.recv_from(&mut buf).expect("Didn't receive data")
+                    socket_event
+                        .recv_from(&mut buf)
+                        .expect("Didn't receive data")
                 } else if event.token() == Token(1) {
-                    socket_general.recv_from(&mut buf).expect("Didn't receive data")
+                    socket_general
+                        .recv_from(&mut buf)
+                        .expect("Didn't receive data")
                 } else {
                     panic!("Unknown token: {:?}", event.token())
                 };
-                println!("Received ptp message from: {}\n{:#?} ", src_addr, parse_ptp_message(&buf).unwrap().1);
+                println!(
+                    "Received ptp message from: {}\n{:#?} ",
+                    src_addr,
+                    parse_ptp_message(&buf).unwrap().1
+                );
             }
         }
     }

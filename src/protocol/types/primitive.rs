@@ -1,0 +1,15 @@
+pub type Boolean = bool;
+pub type Enumeration4 = u8;
+pub type Enumeration8 = u8;
+pub type Enumeration16 = u16;
+pub type UInteger4 = u8;
+pub type Integer8 = i8;
+pub type UInteger8 = u8;
+pub type Integer16 = i16;
+pub type UInteger16 = u16;
+pub type Integer32 = i32;
+pub type UInteger32 = u32;
+pub type UInteger48 = u64;
+pub type Integer64 = i64;
+pub type Nibble = u8;
+pub type Octet = u8;
