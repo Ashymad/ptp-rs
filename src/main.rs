@@ -10,8 +10,8 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use ifaces::interface::{Interface, Kind};
 
-mod parser;
-use parser::parse_ptp_header;
+mod protocol;
+use protocol::parser::parse_ptp_message;
 
 use docopt::Docopt;
 
@@ -19,12 +19,12 @@ const USAGE: &'static str = "
 Rust PTP stack
 
 Usage:
-  ptp --interface=<iface>
+  ptp -i <iface> | --interface=<iface>
   ptp (-h | --help)
 
 Options:
-  -h --help            Show this screen.
-  --interface=<iface>  Choose network interface
+  -h --help                       Show this screen.
+  -i <iface> --interface=<iface>  Choose network interface
 ";
 
 #[derive(Debug, Deserialize)]
@@ -67,7 +67,7 @@ fn main() {
     while !sigint.load(Ordering::Relaxed) {
         if let Err(err) = poll.poll(&mut events, None) {
             if err.kind() == std::io::ErrorKind::Interrupted {
-                println!("Poll interrupted");
+                eprintln!("Poll interrupted");
             } else {
                 panic!("Poll error: {}", err);
             }
@@ -75,7 +75,7 @@ fn main() {
 
         for event in &events {
             if event.is_readable() {
-                let mut buf = [0u8; 34];
+                let mut buf = [0u8; 64];
                 let (number_of_bytes, src_addr) = if event.token() == Token(0) {
                     socket_event.recv_from(&mut buf).expect("Didn't receive data")
                 } else if event.token() == Token(1) {
@@ -83,7 +83,7 @@ fn main() {
                 } else {
                     panic!("Unknown token: {:?}", event.token())
                 };
-                println!("Received ptp message from: {}\n{:?} ", src_addr, parse_ptp_header(&buf).unwrap());
+                println!("Received ptp message from: {}\n{:#?} ", src_addr, parse_ptp_message(&buf).unwrap().1);
             }
         }
     }
