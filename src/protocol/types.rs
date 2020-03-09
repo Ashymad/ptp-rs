@@ -19,12 +19,9 @@ pub mod primitive {
 pub mod enums {
     use super::primitive::{Enumeration4, Enumeration8};
     use std::convert::TryFrom;
-    use num_enum::TryFromPrimitive;
 
     #[allow(non_camel_case_types)]
     pub mod values {
-        use super::super::primitive::{Enumeration4, Enumeration8};
-        use enum_repr::EnumRepr;
         use num_enum::{TryFromPrimitive, IntoPrimitive};
 
         #[derive(Clone, Copy, Debug, Eq, PartialEq, TryFromPrimitive, IntoPrimitive)]
@@ -49,7 +46,7 @@ pub mod enums {
         Unknown(E)
     }
     
-    impl<E, T: TryFrom<E>> From<E> for Enumeration<E, T> {
+    impl<E: Copy, T: TryFrom<E>> From<E> for Enumeration<E, T> {
         fn from(val: E) -> Enumeration<E, T> {
             match T::try_from(val) {
                 Ok(en) => Enumeration::Enum(en),
@@ -58,16 +55,38 @@ pub mod enums {
         }
     }
 
-    impl<E: std::ops::Add + From<<E as std::ops::Add>::Output>, T: TryFrom<E> + Into<E>> std::ops::AddAssign for Enumeration<E, T> {
+    impl<E: Copy + std::ops::Add + From<<E as std::ops::Add>::Output>, T: TryFrom<E> + Into<E> + Copy> std::ops::AddAssign for Enumeration<E, T> {
         fn add_assign(&mut self, other: Self) {
             let rhs: E = match other {
                 Enumeration::Enum(en) => en.into(),
                 Enumeration::Unknown(un) => un,
             };
-            self = &mut Self::from(E::from(rhs + match self {
+            *self = Self::from(E::from(rhs + match self {
                 Enumeration::Enum(en) => Into::<E>::into(*en),
                 Enumeration::Unknown(un) => *un
             }))
+        }
+    }
+
+    impl<E: Copy + std::ops::Shl<U> + From<<E as std::ops::Shl<U>>::Output>, T: TryFrom<E> + Into<E>, U> std::ops::Shl<U> for Enumeration<E, T> {
+        type Output = Self;
+
+        fn shl(self, other: U) -> Self {
+            Self::from(E::from(match self {
+                Enumeration::Enum(en) => Into::<E>::into(en),
+                Enumeration::Unknown(un) => un
+            } << other))
+        }
+    }
+
+    impl<E: Copy + std::ops::Shr<U> + From<<E as std::ops::Shr<U>>::Output>, T: TryFrom<E> + Into<E>, U> std::ops::Shr<U> for Enumeration<E, T> {
+        type Output = Self;
+
+        fn shr(self, other: U) -> Self {
+            Self::from(E::from(match self {
+                Enumeration::Enum(en) => Into::<E>::into(en),
+                Enumeration::Unknown(un) => un
+            } >> other))
         }
     }
 
