@@ -21,7 +21,7 @@ impl<U: Into<E> + PartialOrd + Copy, E, T: TryFrom<E>> From<U> for Enumeration<E
 }
 
 macro_rules! impl_from_enumeration {
-    ($E:ident) => {
+    ($E:ty) => {
         impl<T: Into<$E>> From<Enumeration<$E, T>> for $E {
             fn from(val: Enumeration<$E, T>) -> $E {
                 match val {

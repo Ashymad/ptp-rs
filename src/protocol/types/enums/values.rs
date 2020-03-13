@@ -14,6 +14,7 @@ pub enum MessageType {
     Signaling = 0xC,
     Management = 0xD,
 }
+impl_try_from_Int!(u8, MessageType);
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, TryFromPrimitive, IntoPrimitive)]
 #[repr(u8)]
@@ -27,9 +28,11 @@ pub enum TimeSource {
     OTHER = 0x90,
     INTERNAL_OSCILLATOR = 0xA0,
 }
+impl_try_from_Int!(u8, TimeSource);
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq, TryFromPrimitive, IntoPrimitive)]
 #[repr(u8)]
 pub enum ClockAcurracy {
     Unknown = 0xFF,
 }
+impl_try_from_Int!(u8, ClockAcurracy);

@@ -30,7 +30,7 @@ named!(#[allow(non_snake_case)], pub parse_timestamp<Timestamp>,
         (
             Timestamp {
                 secondsField: secondsField.into(),
-                nanosecondsField
+                nanosecondsField: nanosecondsField.into()
             }
         )
     )
@@ -43,7 +43,7 @@ named!(#[allow(non_snake_case)], pub parse_port_identity<PortIdentity>,
         (
             PortIdentity {
                 clockIdentity: clockIdentity.try_into().expect("Wrong size clockIdentity array!"),
-                portNumber
+                portNumber: portNumber.into()
             }
         )
     )
@@ -56,9 +56,9 @@ named!(#[allow(non_snake_case)], pub parse_clock_quality<ClockQuality>,
         offsetScaledLogVariance: be_u16 >>
         (
             ClockQuality {
-                clockClass,
+                clockClass: clockClass.into(),
                 clockAccuracy: clockAccuracy.into(),
-                offsetScaledLogVariance
+                offsetScaledLogVariance: offsetScaledLogVariance.into()
             }
         )
     )
@@ -87,16 +87,16 @@ pub fn parse_ptp_header<'a>(i: &'a [u8]) -> IResult<&'a [u8], Header> {
                 messageType: b0.1,
                 _reserved1: b0.2,
                 versionPTP: b0.3,
-                messageLength,
-                domainNumber,
-                _reserved2: _reserved2[0],
+                messageLength: messageLength.into(),
+                domainNumber: domainNumber.into(),
+                _reserved2: _reserved2[0].into(),
                 flagField: flagField.try_into().expect("Wrong size flagField array!"),
-                correctionField,
+                correctionField: correctionField.into(),
                 _reserved3: _reserved3.try_into().expect("Wrong size _reserved3 array!"),
                 sourcePortIdentity,
-                sequenceId,
-                controlField,
-                logMessageInterval,
+                sequenceId: sequenceId.into(),
+                controlField: controlField.into(),
+                logMessageInterval: logMessageInterval.into(),
             })
     )
 }
@@ -162,13 +162,13 @@ macro_rules! parse_ptp_body (
                         (
                             Body::Announce(body::Announce {
                                 originTimestamp,
-                                currentUtcOffset,
+                                currentUtcOffset: currentUtcOffset.into(),
                                 _reserved: _reserved[0],
-                                grandmasterPriority1,
+                                grandmasterPriority1: grandmasterPriority1.into(),
                                 grandmasterClockQuality,
-                                grandmasterPriority2,
+                                grandmasterPriority2: grandmasterPriority2.into(),
                                 grandmasterIdentity: grandmasterIdentity.try_into().expect("Wrong size grandmasterIdentity array!"),
-                                stepsRemoved,
+                                stepsRemoved: stepsRemoved.into(),
                                 timeSource: timeSource.into()
                             })
                         )
