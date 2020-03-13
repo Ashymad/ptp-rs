@@ -29,7 +29,7 @@ named!(#[allow(non_snake_case)], pub parse_timestamp<Timestamp>,
         nanosecondsField: be_u32 >>
         (
             Timestamp {
-                secondsField,
+                secondsField: secondsField.into(),
                 nanosecondsField
             }
         )

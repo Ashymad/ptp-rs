@@ -5,17 +5,17 @@ use std::convert::TryFrom;
 #[allow(non_camel_case_types)]
 pub mod values;
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub enum Enumeration<E, T> {
     Enum(T),
     Unknown(E),
 }
 
-impl<E: Copy, T: TryFrom<E>> From<E> for Enumeration<E, T> {
-    fn from(val: E) -> Enumeration<E, T> {
-        match T::try_from(val) {
+impl<U: Into<E> + PartialOrd + Copy, E, T: TryFrom<E>> From<U> for Enumeration<E, T> {
+    fn from(val: U) -> Enumeration<E, T> {
+        match T::try_from(val.into()) {
             Ok(en) => Enumeration::Enum(en),
-            Err(_) => Enumeration::Unknown(val),
+            Err(_) => Enumeration::Unknown(val.into()),
         }
     }
 }
@@ -33,12 +33,16 @@ macro_rules! impl_from_enumeration {
     };
 }
 
-//impl_from_enumeration!(Enumeration4); would be the same as Enumeration8 currently
+impl_from_enumeration!(Enumeration4);
 impl_from_enumeration!(Enumeration8);
 impl_from_enumeration!(Enumeration16);
 
 impl<
-        E: Copy + std::ops::Add + From<<E as std::ops::Add>::Output> + From<Enumeration<E, T>>,
+        E: Copy
+            + PartialOrd
+            + std::ops::Add
+            + From<<E as std::ops::Add>::Output>
+            + From<Enumeration<E, T>>,
         T: TryFrom<E> + Into<E> + Copy,
     > std::ops::AddAssign for Enumeration<E, T>
 {
@@ -48,7 +52,11 @@ impl<
 }
 
 impl<
-        E: Copy + std::ops::Shl<U> + From<<E as std::ops::Shl<U>>::Output> + From<Enumeration<E, T>>,
+        E: Copy
+            + PartialOrd
+            + std::ops::Shl<U>
+            + From<<E as std::ops::Shl<U>>::Output>
+            + From<Enumeration<E, T>>,
         T: TryFrom<E> + Into<E>,
         U,
     > std::ops::Shl<U> for Enumeration<E, T>
@@ -61,7 +69,11 @@ impl<
 }
 
 impl<
-        E: Copy + std::ops::Shr<U> + From<<E as std::ops::Shr<U>>::Output> + From<Enumeration<E, T>>,
+        E: Copy
+            + PartialOrd
+            + std::ops::Shr<U>
+            + From<<E as std::ops::Shr<U>>::Output>
+            + From<Enumeration<E, T>>,
         T: TryFrom<E> + Into<E>,
         U,
     > std::ops::Shr<U> for Enumeration<E, T>

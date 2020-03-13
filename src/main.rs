@@ -95,7 +95,7 @@ fn main() {
         for event in &events {
             if event.is_readable() {
                 let mut buf = [0u8; 64];
-                let (number_of_bytes, src_addr) = if event.token() == Token(0) {
+                let (_number_of_bytes, src_addr) = if event.token() == Token(0) {
                     socket_event
                         .recv_from(&mut buf)
                         .expect("Didn't receive data")
