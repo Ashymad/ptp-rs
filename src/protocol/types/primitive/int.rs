@@ -42,7 +42,7 @@ pub mod constrain {
                 const MAX: Self::Type = Self::Type::max_value();
                 const MIN: Self::Type = Self::Type::min_value();
             }
-        }
+        };
     }
 
     impl_default_constrain!(U8, u8);
@@ -57,8 +57,14 @@ pub mod constrain {
 
 use constrain::Constrain;
 
-#[derive(Debug, PartialEq, PartialOrd, Clone, Copy)]
+#[derive(PartialEq, PartialOrd, Clone, Copy)]
 pub struct Int<C: Constrain>(pub C::Type);
+
+impl<C: Constrain> std::fmt::Debug for Int<C> {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
+        write!(formatter, "{:?}{}", self.0, std::any::type_name::<C>().rsplitn(2, "::").next().unwrap())
+    }
+}
 
 // Eq required only so it doesn't conflict
 impl<C: Constrain, U: Eq> From<U> for Int<C>
@@ -75,6 +81,38 @@ where
         Int(oth)
     }
 }
+
+pub trait TryInto<T> {
+    type Error;
+    fn try_into(self) -> Result<T, Self::Error>;
+}
+
+macro_rules! impl_try_into_int {
+    ($L: literal) => {
+        impl<'a, U: Into<C::Type> + Copy, C: Constrain> TryInto<[Int<C>; $L]> for &'a [U]
+        where
+            C::Type: Default,
+            Int<C>: Copy,
+        {
+            type Error = &'static str;
+            fn try_into(self: Self) -> Result<[Int<C>; $L], Self::Error> {
+                if self.len() == $L {
+                    let mut out = [Int(C::Type::default()); $L];
+                    for idx in 0..$L {
+                        out[idx].0 = self[idx].into();
+                    }
+                    Ok(out)
+                } else {
+                    Err("Incompatible length of slice")
+                }
+            }
+        }
+    };
+}
+
+impl_try_into_int!(2);
+impl_try_into_int!(4);
+impl_try_into_int!(8);
 
 impl<C: Constrain> Add for Int<C> {
     type Output = Self;

@@ -1,7 +1,7 @@
 #[macro_use]
 pub mod int;
 
-use int::constrain::{U4, U8, U16, U32, U48, I8, I16, I32, I64};
+use int::constrain::{I16, I32, I64, I8, U16, U32, U4, U48, U8};
 use int::Int;
 
 pub type Boolean = bool;
@@ -18,4 +18,4 @@ pub type UInteger32 = Int<U32>;
 pub type UInteger48 = Int<U48>;
 pub type Integer64 = Int<I64>;
 pub type Nibble = Int<U4>;
-pub type Octet = u8;
+pub type Octet = Int<U8>;

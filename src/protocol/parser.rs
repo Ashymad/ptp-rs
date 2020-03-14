@@ -1,8 +1,7 @@
 use crate::protocol::types::derived::*;
 use crate::protocol::types::enums::*;
 use crate::protocol::types::message::{body, Body, Header, Message};
-
-use std::convert::TryInto;
+use crate::protocol::types::primitive::int::TryInto;
 
 use nom::error::ParseError;
 use nom::number::streaming::{be_i16, be_i64, be_i8, be_u16, be_u32, be_u8};
@@ -90,9 +89,9 @@ pub fn parse_ptp_header<'a>(i: &'a [u8]) -> IResult<&'a [u8], Header> {
                 messageLength: messageLength.into(),
                 domainNumber: domainNumber.into(),
                 _reserved2: _reserved2[0].into(),
-                flagField: flagField.try_into().expect("Wrong size flagField array!"),
+                flagField: flagField.try_into().unwrap(),
                 correctionField: correctionField.into(),
-                _reserved3: _reserved3.try_into().expect("Wrong size _reserved3 array!"),
+                _reserved3: _reserved3.try_into().unwrap(),
                 sourcePortIdentity,
                 sequenceId: sequenceId.into(),
                 controlField: controlField.into(),
@@ -163,11 +162,11 @@ macro_rules! parse_ptp_body (
                             Body::Announce(body::Announce {
                                 originTimestamp,
                                 currentUtcOffset: currentUtcOffset.into(),
-                                _reserved: _reserved[0],
+                                _reserved: _reserved[0].into(),
                                 grandmasterPriority1: grandmasterPriority1.into(),
                                 grandmasterClockQuality,
                                 grandmasterPriority2: grandmasterPriority2.into(),
-                                grandmasterIdentity: grandmasterIdentity.try_into().expect("Wrong size grandmasterIdentity array!"),
+                                grandmasterIdentity: grandmasterIdentity.try_into().unwrap(),
                                 stepsRemoved: stepsRemoved.into(),
                                 timeSource: timeSource.into()
                             })

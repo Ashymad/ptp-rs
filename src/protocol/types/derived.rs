@@ -9,11 +9,11 @@ pub struct Timestamp {
     pub nanosecondsField: UInteger32,
 }
 
-pub type ClockIdentity<'a> = &'a [Octet; 8];
+pub type ClockIdentity = [Octet; 8];
 
 #[derive(Debug, PartialEq)]
-pub struct PortIdentity<'a> {
-    pub clockIdentity: ClockIdentity<'a>,
+pub struct PortIdentity {
+    pub clockIdentity: ClockIdentity,
     pub portNumber: UInteger16,
 }
 
