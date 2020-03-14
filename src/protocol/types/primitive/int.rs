@@ -33,6 +33,14 @@ pub mod constrain {
         const MIN: Self::Type = 0x000000000000;
     }
 
+    #[derive(Debug, PartialEq, PartialOrd, Clone, Copy)]
+    pub struct U1;
+    impl Constrain for U1 {
+        type Type = u8;
+        const MAX: Self::Type = 1;
+        const MIN: Self::Type = 0;
+    }
+
     macro_rules! impl_default_constrain {
         ($I:ident, $T:ty) => {
             #[derive(Debug, PartialEq, PartialOrd, Clone, Copy)]

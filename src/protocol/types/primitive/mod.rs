@@ -1,10 +1,10 @@
 #[macro_use]
 pub mod int;
 
-use int::constrain::{I16, I32, I64, I8, U16, U32, U4, U48, U8};
+use int::constrain::{I16, I32, I64, I8, U16, U32, U4, U48, U8, U1};
 use int::Int;
 
-pub type Boolean = bool;
+pub type Boolean = Int<U1>;
 pub type Enumeration4 = Int<U4>;
 pub type Enumeration8 = Int<U8>;
 pub type Enumeration16 = Int<U16>;
