@@ -54,13 +54,11 @@ where
 
 macro_rules! impl_bit_serialize {
     ([_; $L:literal]) => {
-        impl<W: io::Write, E: Endianness, C: Constrain> BitSerialize<W, E> for [Int<C>; $L]
-        where
-            C::Type: Numeric
+        impl<W: io::Write, E: Endianness, U: BitSerialize<W, E> + Copy> BitSerialize<W, E> for [U; $L]
         {
             fn bit_serialize(self, bw: &mut BitWriter<W, E>) -> Result<(), io::Error> {
                 for idx in 0..$L {
-                    if let Err(err) = bw.write(C::BITS, self[idx].0) {
+                    if let Err(err) = self[idx].bit_serialize(bw) {
                         return Err(err)
                     }
                 }

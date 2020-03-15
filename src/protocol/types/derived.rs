@@ -1,11 +1,11 @@
 use crate::protocol::types::enums::ClockAcurracy;
 use crate::protocol::types::primitive::*;
-use crate::protocol::types::primitive::int::{Int, BitSerialize};
+use crate::protocol::types::primitive::int::BitSerialize;
 
 
 #[allow(dead_code)] pub struct TimeInterval; //TODO
 
-#[derive(Debug, PartialEq, BitSerialize)]
+#[derive(Debug, PartialEq, Clone, Copy, BitSerialize)]
 pub struct Timestamp {
     pub secondsField: UInteger48,
     pub nanosecondsField: UInteger32,
@@ -13,15 +13,7 @@ pub struct Timestamp {
 
 pub type ClockIdentity = [Octet; 8];
 
-pub fn test() {
-    use bitstream_io::{BigEndian, BitWriter};
-
-    let mut writer = BitWriter::endian(Vec::new(), BigEndian);
-    let ts = Timestamp{ secondsField: Int(0), nanosecondsField: Int(0) };
-    ts.bit_serialize(&mut writer).unwrap();
-}
-
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy, BitSerialize)]
 pub struct PortIdentity {
     pub clockIdentity: ClockIdentity,
     pub portNumber: UInteger16,
