@@ -1,4 +1,6 @@
 #[macro_use]
+extern crate bit_serialize_derive;
+#[macro_use]
 extern crate nom;
 #[macro_use]
 extern crate serde_derive;
@@ -33,6 +35,7 @@ pub struct Args {
 }
 
 fn main() {
+    protocol::types::derived::test();
     let args: Args = Docopt::new(USAGE)
         .and_then(|d| d.deserialize())
         .unwrap_or_else(|e| e.exit());
@@ -107,7 +110,7 @@ fn main() {
                     panic!("Unknown token: {:?}", event.token())
                 };
                 println!(
-                    "Received ptp message from: {}\n{:#?} ",
+                    "Received ptp message from: {}\n{:?} ",
                     src_addr,
                     parse_ptp_message(&buf).unwrap().1
                 );

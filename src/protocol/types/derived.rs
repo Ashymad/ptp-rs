@@ -1,9 +1,11 @@
 use crate::protocol::types::enums::ClockAcurracy;
 use crate::protocol::types::primitive::*;
+use crate::protocol::types::primitive::int::{Int, BitSerialize};
 
-pub struct TimeInterval;
 
-#[derive(Debug, PartialEq)]
+#[allow(dead_code)] pub struct TimeInterval; //TODO
+
+#[derive(Debug, PartialEq, BitSerialize)]
 pub struct Timestamp {
     pub secondsField: UInteger48,
     pub nanosecondsField: UInteger32,
@@ -11,13 +13,21 @@ pub struct Timestamp {
 
 pub type ClockIdentity = [Octet; 8];
 
+pub fn test() {
+    use bitstream_io::{BigEndian, BitWriter};
+
+    let mut writer = BitWriter::endian(Vec::new(), BigEndian);
+    let ts = Timestamp{ secondsField: Int(0), nanosecondsField: Int(0) };
+    ts.bit_serialize(&mut writer).unwrap();
+}
+
 #[derive(Debug, PartialEq)]
 pub struct PortIdentity {
     pub clockIdentity: ClockIdentity,
     pub portNumber: UInteger16,
 }
 
-pub struct PortAddress;
+#[allow(dead_code)] pub struct PortAddress; //TODO
 
 #[derive(Debug, PartialEq)]
 pub struct ClockQuality {
@@ -26,8 +36,8 @@ pub struct ClockQuality {
     pub offsetScaledLogVariance: UInteger16,
 }
 
-pub struct TLV;
+#[allow(dead_code)] pub struct TLV; //TODO
 
-pub struct PTPText;
+#[allow(dead_code)] pub struct PTPText; //TODO
 
-pub struct FaultRecord;
+#[allow(dead_code)] pub struct FaultRecord; //TODO

@@ -28,8 +28,8 @@ named!(#[allow(non_snake_case)], pub parse_timestamp<Timestamp>,
         nanosecondsField: be_u32 >>
         (
             Timestamp {
-                secondsField: secondsField.into(),
-                nanosecondsField: nanosecondsField.into()
+                secondsField: secondsField.try_into().unwrap(),
+                nanosecondsField: nanosecondsField.try_into().unwrap()
             }
         )
     )
@@ -41,8 +41,8 @@ named!(#[allow(non_snake_case)], pub parse_port_identity<PortIdentity>,
         portNumber: be_u16 >>
         (
             PortIdentity {
-                clockIdentity: clockIdentity.try_into().expect("Wrong size clockIdentity array!"),
-                portNumber: portNumber.into()
+                clockIdentity: clockIdentity.try_into().unwrap(),
+                portNumber: portNumber.try_into().unwrap()
             }
         )
     )
@@ -55,9 +55,9 @@ named!(#[allow(non_snake_case)], pub parse_clock_quality<ClockQuality>,
         offsetScaledLogVariance: be_u16 >>
         (
             ClockQuality {
-                clockClass: clockClass.into(),
+                clockClass: clockClass.try_into().unwrap(),
                 clockAccuracy: clockAccuracy.into(),
-                offsetScaledLogVariance: offsetScaledLogVariance.into()
+                offsetScaledLogVariance: offsetScaledLogVariance.try_into().unwrap()
             }
         )
     )
@@ -73,7 +73,7 @@ pub fn parse_ptp_header<'a>(i: &'a [u8]) -> IResult<&'a [u8], Header> {
             take_bits!(4u8)
         )) >> messageLength: be_u16
             >> domainNumber: be_u8
-            >> _reserved2: take!(1)
+            >> _reserved2: be_u8
             >> flagField: take!(2)
             >> correctionField: be_i64
             >> _reserved3: take!(4)
@@ -86,16 +86,16 @@ pub fn parse_ptp_header<'a>(i: &'a [u8]) -> IResult<&'a [u8], Header> {
                 messageType: b0.1,
                 _reserved1: b0.2,
                 versionPTP: b0.3,
-                messageLength: messageLength.into(),
-                domainNumber: domainNumber.into(),
-                _reserved2: _reserved2[0].into(),
+                messageLength: messageLength.try_into().unwrap(),
+                domainNumber: domainNumber.try_into().unwrap(),
+                _reserved2: _reserved2.try_into().unwrap(),
                 flagField: flagField.try_into().unwrap(),
                 correctionField: correctionField.into(),
                 _reserved3: _reserved3.try_into().unwrap(),
                 sourcePortIdentity,
-                sequenceId: sequenceId.into(),
-                controlField: controlField.into(),
-                logMessageInterval: logMessageInterval.into(),
+                sequenceId: sequenceId.try_into().unwrap(),
+                controlField: controlField.try_into().unwrap(),
+                logMessageInterval: logMessageInterval.try_into().unwrap(),
             })
     )
 }
@@ -151,7 +151,7 @@ macro_rules! parse_ptp_body (
                     do_parse!($i,
                         originTimestamp: parse_timestamp >>
                         currentUtcOffset: be_i16 >>
-                        _reserved: take!(1) >>
+                        _reserved: be_u8 >>
                         grandmasterPriority1: be_u8 >>
                         grandmasterClockQuality: parse_clock_quality >>
                         grandmasterPriority2: be_u8 >>
@@ -161,13 +161,13 @@ macro_rules! parse_ptp_body (
                         (
                             Body::Announce(body::Announce {
                                 originTimestamp,
-                                currentUtcOffset: currentUtcOffset.into(),
-                                _reserved: _reserved[0].into(),
-                                grandmasterPriority1: grandmasterPriority1.into(),
+                                currentUtcOffset: currentUtcOffset.try_into().unwrap(),
+                                _reserved: _reserved.try_into().unwrap(),
+                                grandmasterPriority1: grandmasterPriority1.try_into().unwrap(),
                                 grandmasterClockQuality,
-                                grandmasterPriority2: grandmasterPriority2.into(),
+                                grandmasterPriority2: grandmasterPriority2.try_into().unwrap(),
                                 grandmasterIdentity: grandmasterIdentity.try_into().unwrap(),
-                                stepsRemoved: stepsRemoved.into(),
+                                stepsRemoved: stepsRemoved.try_into().unwrap(),
                                 timeSource: timeSource.into()
                             })
                         )

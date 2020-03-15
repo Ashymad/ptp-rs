@@ -25,6 +25,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "bit-serialize-derive"
+version = "0.1.0"
+dependencies = [
+ "quote 1.0.3",
+ "syn 1.0.16",
+]
+
+[[package]]
 name = "bitflags"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -35,6 +43,12 @@ name = "bitflags"
 version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf1de2fe8c75bc145a2f577add951f8134889b4795d47466a54a5c846d691693"
+
+[[package]]
+name = "bitstream-io"
+version = "0.8.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "395bab683d996399e6046dbea0f7e616d3d8234bf87c1bd88173018f560dd653"
 
 [[package]]
 name = "cfg-if"
@@ -63,17 +77,6 @@ dependencies = [
  "regex",
  "serde",
  "strsim",
-]
-
-[[package]]
-name = "enum-repr"
-version = "0.2.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bad30c9c0fa1aaf1ae5010dab11f1117b15d35faf62cda4bbbc53b9987950f18"
-dependencies = [
- "proc-macro2 1.0.9",
- "quote 1.0.3",
- "syn 1.0.16",
 ]
 
 [[package]]
@@ -242,8 +245,9 @@ dependencies = [
 name = "ptp"
 version = "0.1.0"
 dependencies = [
+ "bit-serialize-derive",
+ "bitstream-io",
  "docopt",
- "enum-repr",
  "ifaces",
  "mio",
  "nom",
