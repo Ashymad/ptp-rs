@@ -108,11 +108,8 @@ fn main() {
                 } else {
                     panic!("Unknown token: {:?}", event.token())
                 };
-                println!(
-                    "Received ptp message from: {}\n{:?} ",
-                    src_addr,
-                    parse_ptp_message(&buf).unwrap().1
-                );
+                let msg = parse_ptp_message(&buf).unwrap().1;
+                println!("Received ptp message from: {}\n{:#?} ", src_addr, msg);
             }
         }
     }

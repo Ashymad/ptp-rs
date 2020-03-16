@@ -1,5 +1,6 @@
 use crate::protocol::types::derived::*;
 use crate::protocol::types::enums::MessageType;
+use crate::protocol::types::primitive::int::BitSerialize;
 use crate::protocol::types::primitive::*;
 
 #[allow(non_camel_case_types)]
@@ -7,7 +8,7 @@ use crate::protocol::types::primitive::*;
 pub mod body;
 
 #[allow(non_snake_case)]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, BitSerialize, Clone, Copy)]
 pub struct Header {
     pub transportSpecific: Nibble,
     pub messageType: MessageType,
@@ -26,7 +27,7 @@ pub struct Header {
 }
 
 #[allow(non_camel_case_types)]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, BitSerialize, Clone, Copy)]
 pub enum Body {
     Announce(body::Announce),
     Sync(body::Sync),
@@ -37,7 +38,7 @@ pub enum Body {
 }
 
 #[allow(non_snake_case)]
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, BitSerialize, Clone, Copy)]
 pub struct Message {
     pub header: Header,
     pub body: Body,

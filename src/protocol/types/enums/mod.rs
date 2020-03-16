@@ -1,4 +1,6 @@
+use crate::protocol::types::primitive::int::BitSerialize;
 use crate::protocol::types::primitive::{Enumeration16, Enumeration4, Enumeration8};
+use bitstream_io::{BitWriter, Endianness};
 
 use std::convert::TryFrom;
 
@@ -9,6 +11,19 @@ pub mod values;
 pub enum Enumeration<E, T> {
     Enum(T),
     Unknown(E),
+}
+
+impl<W: std::io::Write, EN: Endianness, E, T> BitSerialize<W, EN> for Enumeration<E, T>
+where
+    E: BitSerialize<W, EN>,
+    T: Into<E>,
+{
+    fn bit_serialize(self, bw: &mut BitWriter<W, EN>) -> Result<(), std::io::Error> {
+        match self {
+            Enumeration::Enum(t) => t.into().bit_serialize(bw),
+            Enumeration::Unknown(e) => e.bit_serialize(bw),
+        }
+    }
 }
 
 impl<U: Into<E> + PartialOrd + Copy, E, T: TryFrom<E>> From<U> for Enumeration<E, T> {

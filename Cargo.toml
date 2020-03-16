@@ -15,5 +15,5 @@ edition = "2018"
     serde_derive = "1.0"
     ifaces = "0.1"
     num_enum = "0.4"
-    bitstream-io = "0.8"
+    bitstream-io = { path = "bitstream-io" }
     bit-serialize-derive = { path = "bit-serialize-derive" }

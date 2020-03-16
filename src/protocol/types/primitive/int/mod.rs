@@ -1,8 +1,9 @@
+use bitstream_io::{BitWriter, Endianness, Numeric};
 use std::fmt;
 use std::io;
 use std::ops::{Add, AddAssign, Shl, Shr};
-use bitstream_io::{Endianness, Numeric, BitWriter};
 
+#[allow(non_camel_case_types)]
 pub mod constrain;
 use constrain::Constrain;
 
@@ -23,6 +24,17 @@ where
     }
 }
 
+impl<C: Constrain> Constrain for Int<C> {
+    type Type = C::Type;
+    fn max() -> Self::Type {
+        C::max()
+    }
+    fn min() -> Self::Type {
+        C::min()
+    }
+    const BITS: u32 = C::BITS;
+}
+
 // Eq required only so it doesn't conflict
 impl<C: Constrain, U: Eq> From<U> for Int<C>
 where
@@ -39,28 +51,59 @@ where
     }
 }
 
-pub trait BitSerialize<W: io::Write, E:Endianness> {
+pub trait BitSerializeProto<W: io::Write, E: Endianness>
+where
+    Self: Numeric,
+{
+    fn bit_serialize_proto(self, bits: u32, bw: &mut BitWriter<W, E>) -> Result<(), io::Error>;
+}
+pub trait BitSerialize<W: io::Write, E: Endianness> {
     fn bit_serialize(self, bw: &mut BitWriter<W, E>) -> Result<(), io::Error>;
 }
 
-impl<W: io::Write, E: Endianness, C: Constrain> BitSerialize<W, E> for Int<C> 
+macro_rules! impl_bit_serialize_proto {
+    ($i:ident: $($type:ty),*) => {
+        $(
+            impl<W: io::Write, E: Endianness> BitSerializeProto<W, E> for $type {
+                fn bit_serialize_proto(self, bits: u32, bw: &mut BitWriter<W, E>) -> Result<(), io::Error> {
+                    impl_bit_serialize_proto!(@write $i, bw, bits, self)
+                }
+            }
+            impl<W: io::Write, E: Endianness> BitSerialize<W, E> for $type {
+                fn bit_serialize(self, bw: &mut BitWriter<W, E>) -> Result<(), io::Error> {
+                    self.bit_serialize_proto(Self::bits_size(), bw)
+                }
+            }
+        )*
+    };
+    (@write u, $bw:ident, $b:ident, $s:ident) => {
+        $bw.write($b, $s)
+    };
+    (@write i, $bw: ident, $b:ident, $s:ident) => {
+        $bw.write_signed($b, $s)
+    };
+}
+
+impl_bit_serialize_proto!(i: i8, i16, i32, i64);
+impl_bit_serialize_proto!(u: u8, u16, u32, u64);
+
+impl<W: io::Write, E: Endianness, C: Constrain> BitSerialize<W, E> for Int<C>
 where
-    C::Type: Numeric
+    C::Type: BitSerializeProto<W, E>,
 {
     fn bit_serialize(self, bw: &mut BitWriter<W, E>) -> Result<(), io::Error> {
-        bw.write(C::BITS, self.0)
+        self.0.bit_serialize_proto(C::BITS, bw)
     }
 }
 
 macro_rules! impl_bit_serialize {
     ([_; $L:literal]) => {
-        impl<W: io::Write, E: Endianness, U: BitSerialize<W, E> + Copy> BitSerialize<W, E> for [U; $L]
+        impl<W: io::Write, E: Endianness, U: BitSerialize<W, E> + Copy> BitSerialize<W, E>
+            for [U; $L]
         {
             fn bit_serialize(self, bw: &mut BitWriter<W, E>) -> Result<(), io::Error> {
                 for idx in 0..$L {
-                    if let Err(err) = self[idx].bit_serialize(bw) {
-                        return Err(err)
-                    }
+                    self[idx].bit_serialize(bw)?
                 }
                 Ok(())
             }
