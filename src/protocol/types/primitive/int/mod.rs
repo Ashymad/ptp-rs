@@ -8,7 +8,22 @@ pub mod constrain;
 use constrain::Constrain;
 
 #[derive(PartialEq, PartialOrd, Clone, Copy)]
-pub struct Int<C: Constrain>(pub C::Type);
+pub struct Int<C: Constrain>(C::Type);
+
+impl<C: Constrain> Int<C> {
+    pub fn new(c: C::Type) -> Self where C::Type: PartialOrd {
+        if c > C::max() {
+            panic!("Value overflows!")
+        } else if c < C::min() {
+            panic!("Value underflows!")
+        } else {
+            return Int(c)
+        }
+    }
+    pub fn into_inner(self) -> C::Type {
+        return self.0
+    }
+}
 
 impl<C: Constrain> fmt::Debug for Int<C>
 where
