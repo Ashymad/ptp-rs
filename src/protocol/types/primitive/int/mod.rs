@@ -248,20 +248,45 @@ where
     }
 }
 
-macro_rules! impl_try_from_Int {
-    ($T:ty, $E:ty) => {
-        impl<C: $crate::protocol::types::primitive::int::constrain::Constrain>
-            std::convert::TryFrom<$crate::protocol::types::primitive::int::Int<C>> for $E
-        where
-            C::Type: Into<$T>,
-        {
-            type Error = <$E as std::convert::TryFrom<$T>>::Error;
-
-            fn try_from(
-                other: $crate::protocol::types::primitive::int::Int<C>,
-            ) -> Result<Self, Self::Error> {
-                <$E>::try_from(other.0.into())
+macro_rules! enum_Int {
+    ($name:ident<$type:ty> {$($field:ident = $value:expr),*}) => {
+        #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+        pub enum $name {
+            $(
+                $field = $value
+            ),*
+        }
+        impl Into<Int<$type>> for $name {
+            fn into(self) -> Int<$type> {
+                Int::new(match self {
+                    $(
+                        $name::$field => $value
+                    ),*
+                })
             }
         }
-    };
+        impl TryFrom<Int<$type>> for $name {
+            type Error = &'static str;
+
+            fn try_from(other: Int<$type>) -> Result<Self, Self::Error> {
+                match other.into_inner() {
+                    $(
+                        $value => Ok($name::$field)
+                    ),*,
+                        _ => Err("Value doesn't have corresponding variant")
+                }
+            }
+        }
+       impl<W: io::Write, E: Endianness> BitSerialize<W, E> for $name {
+            fn bit_serialize(self, bw: &mut BitWriter<W, E>) -> Result<(), io::Error> {
+                let val: <$type as Constrain>::Type = match self {
+                    $(
+                        $name::$field => $value
+                    ),*
+                };
+                val.bit_serialize_proto(<$type as Constrain>::BITS, bw)
+            }
+        }
+    }
 }
+
