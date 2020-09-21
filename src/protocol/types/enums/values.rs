@@ -1,8 +1,8 @@
-use bitstream_io::{BitWriter, Endianness};
-use std::io;
+use crate::protocol::types::primitive::int::constrain::{u4, Constrain};
 use crate::protocol::types::primitive::int::{BitSerialize, BitSerializeProto, Int};
-use crate::protocol::types::primitive::int::constrain::{Constrain, u4};
+use bitstream_io::{BitWriter, Endianness};
 use std::convert::TryFrom;
+use std::io;
 
 enum_Int!(MessageType<u4> {
     Sync = 0x0,

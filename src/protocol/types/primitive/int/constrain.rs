@@ -29,15 +29,15 @@ macro_rules! impl_constrain {
     };
     (@maxmin i, $type:ty) => {
         fn max() -> Self::Type {
-            (2 as $type).wrapping_pow(Self::BITS - 1).wrapping_sub(1)
+            (2 as $type).wrapping_pow(<Self as Constrain>::BITS - 1).wrapping_sub(1)
         }
         fn min() -> Self::Type {
-            (2 as $type).wrapping_pow(Self::BITS - 1).wrapping_neg()
+            (2 as $type).wrapping_pow(<Self as Constrain>::BITS - 1).wrapping_neg()
         }
     };
     (@maxmin u, $type:ty) => {
         fn max() -> Self::Type {
-            (2 as $type).wrapping_pow(Self::BITS).wrapping_sub(1)
+            (2 as $type).wrapping_pow(<Self as Constrain>::BITS).wrapping_sub(1)
         }
         fn min() -> Self::Type {
             0

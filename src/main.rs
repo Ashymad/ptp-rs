@@ -4,9 +4,20 @@ extern crate bit_serialize_derive;
 extern crate nom;
 #[macro_use]
 extern crate serde_derive;
+#[macro_use]
+extern crate nix;
 
 use mio::net::UdpSocket;
 use mio::{Events, Interest, Poll, Token};
+
+use nix::errno::Errno::EAGAIN;
+use nix::sys::socket::sockopt::ReceiveTimestamp;
+use nix::sys::socket::{recvmsg, setsockopt, MsgFlags};
+use nix::sys::time::TimeVal;
+use nix::sys::uio::IoVec;
+use nix::Error::Sys;
+
+use std::os::unix::io::AsRawFd;
 
 use ifaces::interface::{Interface, Kind};
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -16,6 +27,9 @@ mod protocol;
 use protocol::parser::parse_ptp_message;
 
 use docopt::Docopt;
+
+const EVENT_MSG: Token = Token(0);
+const GENERAL_MSG: Token = Token(0);
 
 const USAGE: &'static str = "
 Rust PTP stack
@@ -65,6 +79,7 @@ fn main() {
     let bind_addr_general = "0.0.0.0:320".parse().unwrap();
     let mut socket_general = UdpSocket::bind(bind_addr_general).unwrap();
     let mut socket_event = UdpSocket::bind(bind_addr_event).unwrap();
+    assert!(setsockopt(socket_event.as_raw_fd(), ReceiveTimestamp, &true).is_ok());
     socket_general
         .join_multicast_v4(&multicast_addr, &iface_addr)
         .unwrap();
@@ -75,10 +90,10 @@ fn main() {
     let mut events = Events::with_capacity(128);
 
     poll.registry()
-        .register(&mut socket_event, Token(0), Interest::READABLE)
+        .register(&mut socket_event, EVENT_MSG, Interest::READABLE)
         .unwrap();
     poll.registry()
-        .register(&mut socket_general, Token(1), Interest::READABLE)
+        .register(&mut socket_general, GENERAL_MSG, Interest::READABLE)
         .unwrap();
 
     println!(
@@ -97,19 +112,36 @@ fn main() {
         for event in &events {
             if event.is_readable() {
                 let mut buf = [0u8; 64];
-                let (_number_of_bytes, src_addr) = if event.token() == Token(0) {
-                    socket_event
+                if event.token() == EVENT_MSG {
+                    let mut cmsg_buf = cmsg_space!(TimeVal);
+                    let iov_buf = IoVec::from_mut_slice(&mut buf[..]);
+                    let msg = match recvmsg(
+                        socket_event.as_raw_fd(),
+                        &[iov_buf],
+                        Some(&mut cmsg_buf),
+                        MsgFlags::MSG_WAITALL,
+                    ) {
+                        Ok(data) => data,
+                        Err(Sys(EAGAIN)) => continue,
+                        Err(err) => panic!("Couldn't read data from socket: {:?}", err),
+                    };
+                    println!(
+                        "Received ptp message from: {}",
+                        msg.address.unwrap().to_str()
+                    );
+                    for cmsg in msg.cmsgs() {
+                        println!("Ancillary data: {:?}", cmsg);
+                    }
+                } else if event.token() == GENERAL_MSG {
+                    let (_number_of_bytes, src_addr) = socket_general
                         .recv_from(&mut buf)
-                        .expect("Didn't receive data")
-                } else if event.token() == Token(1) {
-                    socket_general
-                        .recv_from(&mut buf)
-                        .expect("Didn't receive data")
+                        .expect("Didn't receive data");
+                    println!("Received ptp message from: {}", src_addr);
                 } else {
                     panic!("Unknown token: {:?}", event.token())
                 };
-                let msg = parse_ptp_message(&buf).unwrap().1;
-                println!("Received ptp message from: {}\n{:#?} ", src_addr, msg);
+                let msg = parse_ptp_message(&buf).unwrap();
+                println!("{:#?}", msg.1);
             }
         }
     }
